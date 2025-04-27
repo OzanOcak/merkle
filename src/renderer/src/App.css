@@ -1,0 +1,52 @@
+/* App.css */
+
+/* Light Mode Scrollbar */
+:root {
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-width: 6px; /* Thinner scrollbar */
+  --scrollbar-thumb-height: 30%; /* Shorter thumb */
+}
+
+/* Dark Mode Scrollbar */
+.dark {
+  --scrollbar-thumb: #4b5563;
+  --scrollbar-track: #111827;
+}
+
+/* Slim Scrollbar Styling */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: calc(var(--scrollbar-width) / 2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: calc(var(--scrollbar-width) / 2);
+  min-height: 30px; /* Minimum thumb length */
+  background-clip: padding-box;
+}
+
+/* Make the thumb shorter by using background height */
+::-webkit-scrollbar-thumb:vertical {
+  height: var(--scrollbar-thumb-height);
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  width: var(--scrollbar-thumb-height);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Firefox support */
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}

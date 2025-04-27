@@ -1,0 +1,35 @@
+{
+  "name": "markly-backend",
+  "version": "1.0.0",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "node build/server.js",
+    "dev": "nodemon --watch src -e ts --exec ts-node src/server.ts",
+    "build": "tsc",
+    "db:generate": "drizzle-kit generate --schema=./src/database/schema.ts --out=./drizzle --dialect=sqlite",
+    "db:push": "drizzle-kit push --schema=./src/database/schema.ts --dialect=sqlite --url=file:./db.sqlite",
+    "db:reset": "rm -f db.sqlite* && npm run db:push",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.9.1",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.41.0",
+    "express": "^5.1.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/body-parser": "^1.19.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.13",
+    "drizzle-kit": "^0.30.6",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
