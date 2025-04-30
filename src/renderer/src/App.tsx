@@ -1,11 +1,11 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createHashRouter, RouterProvider } from 'react-router-dom'
 import MainLayout from './components/mainlayout'
 import InfoPage from './pages/infopage'
 import InfoPage2 from './pages/infopage2'
 import './App.css'
 import MdEditor from './components/mdEditor'
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <MainLayout />, // Use MainLayout for tracking and error handling
