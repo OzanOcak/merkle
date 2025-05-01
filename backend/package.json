@@ -1,11 +1,12 @@
 {
-  "name": "markly-backend",
+  "name": "markle-backend",
   "version": "1.0.0",
   "main": "src/server.ts",
   "scripts": {
     "start": "node build/server.js",
     "dev": "nodemon --watch src -e ts --exec ts-node src/server.ts",
-    "build": "tsc",
+    "build": "rm -rf build && tsc && cp -r src/database drizzle db.sqlite build/",
+    "clean": "rm -rf build",
     "db:generate": "drizzle-kit generate --schema=./src/database/schema.ts --out=./drizzle --dialect=sqlite",
     "db:push": "drizzle-kit push --schema=./src/database/schema.ts --dialect=sqlite --url=file:./db.sqlite",
     "db:reset": "rm -f db.sqlite* && npm run db:push",

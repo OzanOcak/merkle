@@ -10,20 +10,13 @@ const port = 3001
 // Configure allowed origins
 const ALLOWED_ORIGINS = [
   'http://localhost:5173', // Electron renderer
-  'http://localhost:5174' // Optional dev frontend
-  // Add 'app://*' if using custom protocol in production
+  'app://*', // Electron production (if using app protocol)
+  'file://*' // For file:// URLs in production
 ]
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true)
-      } else {
-        console.warn(`Blocked by CORS: ${origin}`)
-        callback(new Error('Not allowed by CORS'))
-      }
-    },
+    origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type'],
     maxAge: 86400 // Cache CORS preflight for 24h
