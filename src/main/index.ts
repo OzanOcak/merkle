@@ -129,6 +129,10 @@ const createWindow = async (): Promise<void> => {
       width: 1200,
       height: 800,
       show: false,
+      icon:
+        process.platform === 'win32'
+          ? path.join(__dirname, 'build/icon.ico')
+          : path.join(__dirname, 'build/icon.png'), // .png for Linux/macOS
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
