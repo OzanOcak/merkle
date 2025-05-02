@@ -3,298 +3,283 @@ import fs from 'fs'
 import { app, BrowserWindow } from 'electron'
 import { spawn, ChildProcess } from 'child_process'
 
-// Global state
+// Global state with type safety
 let mainWindow: BrowserWindow | null = null
 let apiProcess: ChildProcess | null = null
 let healthCheckInterval: NodeJS.Timeout | null = null
-const backendReady = false
 let apiRetryCount = 0
-const MAX_API_RETRIES = 30 // ~30 seconds with current interval
+const MAX_API_RETRIES = 30
+const API_PORT = 3001
+const HEALTH_CHECK_TIMEOUT = 2000
 
-// Debug logging utility
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const debugLog = (message: string, data?: any): void => {
+// Centralized error handling
+const handleError = (context: string, error: unknown): void => {
   const timestamp = new Date().toISOString()
-  const logMessage = `[DEBUG ${timestamp}] ${message}${data ? '\n' + JSON.stringify(data, null, 2) : ''}`
-  console.log(logMessage)
-  fs.appendFileSync(path.join(app.getPath('logs'), 'markle-debug.log'), logMessage + '\n')
-}
+  const errorMessage = error instanceof Error ? error.message : String(error)
+  const logMessage = `[ERROR ${timestamp}] ${context}: ${errorMessage}`
 
-// Initialize debug logging
-debugLog('Application starting', {
-  cwd: process.cwd(),
-  argv: process.argv,
-  env: {
-    NODE_ENV: process.env.NODE_ENV,
-    ELECTRON_RUN_AS_NODE: process.env.ELECTRON_RUN_AS_NODE
-  }
-})
-
-// Backend management with enhanced debugging
-async function startBackend(): Promise<void> {
-  if (apiProcess && !apiProcess.killed) {
-    debugLog('Backend already running')
-    return
-  }
-
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  let backendPath: string
-  let backendMain: string
+  console.error(logMessage)
 
   try {
-    backendPath = isDevelopment
+    fs.appendFileSync(path.join(app.getPath('logs'), 'markle-error.log'), logMessage + '\n')
+  } catch (logError) {
+    console.error('Failed to write to error log:', logError)
+  }
+}
+
+// Properly cleanup backend process
+const cleanupBackend = (): void => {
+  if (apiProcess) {
+    try {
+      if (!apiProcess.killed) {
+        apiProcess.removeAllListeners()
+        apiProcess.kill('SIGTERM')
+      }
+    } catch (err) {
+      handleError('Cleaning up backend process', err)
+    } finally {
+      apiProcess = null
+    }
+  }
+}
+
+// Start backend with proper error handling
+const startBackend = async (): Promise<boolean> => {
+  // Clean up any existing process first
+  cleanupBackend()
+
+  try {
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const backendPath = isDevelopment
       ? path.join(__dirname, '../../backend')
       : path.join(process.resourcesPath, 'app/backend')
 
-    backendMain = path.join(backendPath, 'index.js')
-
-    debugLog('Checking backend files', {
-      backendPath,
-      backendMain,
-      exists: fs.existsSync(backendMain)
-    })
+    const backendMain = path.join(backendPath, 'index.js')
 
     if (!fs.existsSync(backendMain)) {
-      debugLog('Backend entry point not found', { backendMain })
-      return
+      throw new Error(`Backend entry point not found at ${backendMain}`)
     }
-  } catch (err) {
-    debugLog('Failed to locate backend files', {
-      error: err instanceof Error ? err.message : String(err)
-    })
-    return
-  }
 
-  debugLog(`Starting backend from: ${backendMain}`)
-
-  try {
     apiProcess = spawn(process.execPath, [backendMain], {
       cwd: backendPath,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
         NODE_ENV: process.env.NODE_ENV || 'production',
-        PORT: '3001',
-        ALTERNATE_PORT: '3002'
+        PORT: API_PORT.toString()
       }
-    })
-
-    debugLog('Backend process spawned', {
-      pid: apiProcess.pid,
-      command: `${process.execPath} ${backendMain}`,
-      cwd: backendPath
     })
 
     if (!apiProcess.stdout || !apiProcess.stderr) {
-      debugLog('Failed to establish communication with backend process')
-      return
+      throw new Error('Failed to establish communication with backend process')
     }
 
-    const safeLog = (data: Buffer, type: 'log' | 'error'): void => {
-      const str = data.toString().trim()
-      if (str) {
-        console[type](`[Backend] ${str}`)
-        debugLog(`Backend ${type}`, str)
-      }
-    }
-
-    apiProcess.stdout.on('data', (data) => safeLog(data, 'log'))
-    apiProcess.stderr.on('data', (data) => safeLog(data, 'error'))
+    // Log backend output
+    apiProcess.stdout.on('data', (data) => console.log(`[Backend] ${data.toString().trim()}`))
+    apiProcess.stderr.on('data', (data) => console.error(`[Backend] ${data.toString().trim()}`))
 
     apiProcess.on('error', (err) => {
-      debugLog('API server process error', {
-        error: err.message,
-        stack: err.stack
-      })
+      handleError('Backend process error', err)
+      cleanupBackend()
     })
 
-    apiProcess.on('spawn', () => {
-      debugLog('Backend successfully spawned', { pid: apiProcess?.pid })
-    })
-
-    apiProcess.on('close', (code, signal) => {
-      debugLog('Backend process closed', { code, signal })
-      apiProcess = null
+    apiProcess.on('exit', (code, signal) => {
       if (code !== 0) {
-        debugLog('API server exited unexpectedly')
+        handleError('Backend process exited', new Error(`Code: ${code}, Signal: ${signal}`))
       }
+      cleanupBackend()
     })
-  } catch (err) {
-    debugLog('Failed to start API server', {
-      error: err instanceof Error ? err.message : String(err)
-    })
-  }
-}
 
-// Enhanced health check with debugging
-async function isBackendAlive(): Promise<boolean> {
-  try {
-    const startTime = Date.now()
-    const response = await fetch('http://localhost:3001/api/healthcheck', {
-      signal: AbortSignal.timeout(2000)
-    })
-    debugLog('Health check response', {
-      status: response.status,
-      duration: Date.now() - startTime
-    })
-    return response.ok
-  } catch (error) {
-    debugLog('Health check failed', {
-      error: error instanceof Error ? error.message : String(error)
-    })
+    return true
+  } catch (err) {
+    handleError('Starting backend', err)
+    cleanupBackend()
     return false
   }
 }
 
-// Window management with debugging
-async function createWindow(): Promise<void> {
-  debugLog('Creating main window')
+// Health check with timeout
+const isBackendAlive = async (): Promise<boolean> => {
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT)
 
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    backgroundColor: '#FF00FF',
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      devTools: true,
-      webSecurity: false,
-      allowRunningInsecureContent: true
-    }
-  })
+    const response = await fetch(`http://localhost:${API_PORT}/api/healthcheck`, {
+      signal: controller.signal
+    })
 
-  // Debug tools
-  mainWindow.webContents.openDevTools({ mode: 'detach' })
-  debugLog('DevTools opened')
+    clearTimeout(timeout)
+    return response.ok
+  } catch {
+    return false
+  }
+}
 
-  // Debug event listeners
-  mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDesc) => {
-    debugLog('Window failed to load', { errorCode, errorDesc })
-  })
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    debugLog('Window finished loading')
-    mainWindow?.show()
-  })
+// Window management with cleanup
+const createWindow = async (): Promise<void> => {
+  // Prevent multiple windows
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+    return
+  }
 
   try {
+    mainWindow = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      show: false,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        devTools: process.env.NODE_ENV === 'development'
+      }
+    })
+
+    // Show dock icon when window is ready (macOS)
+    mainWindow.on('ready-to-show', () => {
+      if (process.platform === 'darwin') {
+        app.dock?.show()
+      }
+      mainWindow?.show()
+    })
+
+    // Proper window close handling
+    mainWindow.on('closed', () => {
+      mainWindow = null
+      // Hide dock when window is closed (macOS)
+      if (process.platform === 'darwin') {
+        app.dock?.hide()
+      }
+    })
+
     if (process.env.NODE_ENV === 'development') {
-      debugLog('Loading development version')
+      mainWindow.webContents.openDevTools({ mode: 'detach' })
       await mainWindow.loadURL('http://localhost:5173')
     } else {
-      const absolutePath =
-        '/Users/armchip/projects/electron/merkle/dist/mac-arm64/Markle.app/Contents/Resources/renderer/index.html'
-      const resourcePath = path.join(process.resourcesPath, 'renderer/index.html')
-
-      debugLog('Checking production paths', {
-        absolutePath,
-        absolutePathExists: fs.existsSync(absolutePath),
-        resourcePath,
-        resourcePathExists: fs.existsSync(resourcePath)
-      })
-
-      if (fs.existsSync(absolutePath)) {
-        await mainWindow.loadFile(absolutePath)
-      } else if (fs.existsSync(resourcePath)) {
-        await mainWindow.loadFile(resourcePath)
-      } else {
-        await mainWindow.loadURL(`data:text/html,...`)
-      }
+      const indexPath = path.join(process.resourcesPath, 'renderer/index.html')
+      await mainWindow.loadFile(indexPath)
     }
   } catch (err) {
-    debugLog('Window creation error', {
-      error: err instanceof Error ? err.message : String(err)
-    })
-    await mainWindow.loadURL(`data:text/html,...`)
-    mainWindow.show()
-  }
-}
-
-function createDebugSnapshot(): void {
-  const debugInfo = {
-    timestamp: new Date().toISOString(),
-    // Backend paths
-    backend: {
-      devPath: path.join(__dirname, '../../backend'),
-      prodPath: path.join(process.resourcesPath, 'app/backend'),
-      mainFile: path.join(process.resourcesPath, 'app/backend/index.js'),
-      exists: fs.existsSync(path.join(process.resourcesPath, 'app/backend/index.js'))
-    },
-    // Resources
-    resources: {
-      path: process.resourcesPath,
-      contents: fs.readdirSync(process.resourcesPath)
-    },
-    // Environment
-    env: {
-      NODE_ENV: process.env.NODE_ENV,
-      PORT: process.env.PORT,
-      ELECTRON_RUN_AS_NODE: process.env.ELECTRON_RUN_AS_NODE
-    },
-    // Network
-    network: {
-      localhost: {
-        '3001': fetch('http://localhost:3001').catch((e) => e.message)
-      }
+    handleError('Creating window', err)
+    if (mainWindow) {
+      await mainWindow.loadURL(`data:text/html,<h1>Application Error</h1>`)
+      mainWindow.show()
     }
   }
-
-  // Write to desktop for easy access
-  fs.writeFileSync(
-    path.join(app.getPath('desktop'), 'MARKLE_DEBUG.json'),
-    JSON.stringify(debugInfo, null, 2)
-  )
 }
 
-// App lifecycle with debugging
-app.whenReady().then(() => {
-  createDebugSnapshot()
-  debugLog('App ready')
-  createWindow()
-  startBackend()
+// Cleanup all resources
+const cleanup = (): void => {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval)
+    healthCheckInterval = null
+  }
+  cleanupBackend()
+}
 
-  healthCheckInterval = setInterval(async () => {
-    const alive = await isBackendAlive()
-    debugLog('Health check result', { alive, retryCount: apiRetryCount })
+// Single instance lock for production
+const gotTheLock = app.requestSingleInstanceLock()
 
-    if (alive) {
-      debugLog('API connection established')
-      if (healthCheckInterval) clearInterval(healthCheckInterval)
-    } else if (apiRetryCount >= MAX_API_RETRIES) {
-      debugLog('Max API retries reached')
-      if (healthCheckInterval) clearInterval(healthCheckInterval)
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // Someone tried to run a second instance - focus our window instead
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
     } else {
-      apiRetryCount++
-      debugLog(`Retrying API connection (attempt ${apiRetryCount}/${MAX_API_RETRIES})`)
-      startBackend()
+      createWindow().catch((err) => {
+        handleError('Recreating window from second instance', err)
+      })
     }
-  }, 1000)
+  })
 
-  setTimeout(() => {
-    if (!backendReady) {
-      debugLog('Startup timeout reached')
+  // App lifecycle management
+  app.whenReady().then(async () => {
+    try {
+      // Hide dock initially (macOS)
+      if (process.platform === 'darwin') {
+        app.dock?.hide()
+      }
+
+      await createWindow()
+      const started = await startBackend()
+
+      if (started) {
+        healthCheckInterval = setInterval(async () => {
+          const alive = await isBackendAlive()
+
+          if (alive) {
+            if (healthCheckInterval) clearInterval(healthCheckInterval)
+          } else if (apiRetryCount >= MAX_API_RETRIES) {
+            cleanup()
+            handleError('Backend', new Error('Maximum connection retries reached'))
+          } else {
+            apiRetryCount++
+            await startBackend()
+          }
+        }, 1000)
+      }
+    } catch (err) {
+      handleError('App initialization', err)
     }
-  }, 30000)
-})
+  })
+}
 
+// Proper shutdown handling
 app.on('window-all-closed', () => {
-  debugLog('All windows closed')
-  if (process.platform !== 'darwin') app.quit()
+  // On macOS, we keep the app running even with no windows
+  if (process.platform !== 'darwin') {
+    cleanup()
+    app.quit()
+  }
 })
 
 app.on('activate', () => {
-  debugLog('App activated')
-  if (mainWindow === null) createWindow()
+  // On macOS, recreate window when dock icon is clicked and no windows are open
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow().catch((err) => {
+      handleError('Recreating window on activate', err)
+    })
+  }
+})
+
+app.on('before-quit', () => {
+  // Ensure proper cleanup when actually quitting
+  cleanup()
 })
 
 app.on('will-quit', () => {
-  debugLog('App quitting')
-  if (apiProcess) apiProcess.kill('SIGTERM')
-  if (healthCheckInterval) clearInterval(healthCheckInterval)
+  // Final cleanup
+  cleanup()
 })
 
-app.on('web-contents-created', (_, contents) => {
-  contents.openDevTools({ mode: 'detach' })
-  debugLog('DevTools forced open for web contents')
+// Handle macOS reopen events
+app.on('open-file', () => {
+  if (mainWindow === null) {
+    createWindow().catch((err) => {
+      handleError('Recreating window from file open', err)
+    })
+  }
+})
+
+app.on('open-url', () => {
+  if (mainWindow === null) {
+    createWindow().catch((err) => {
+      handleError('Recreating window from URL open', err)
+    })
+  }
+})
+
+// Prevent process from hanging
+process.on('uncaughtException', (err) => {
+  handleError('Uncaught Exception', err)
+  cleanup()
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+  handleError('Unhandled Rejection', reason)
 })
