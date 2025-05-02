@@ -1,45 +1,50 @@
-appId: com.electron.app
-productName: merkle
+appId: com.markle.app
+productName: 'Markle'
 directories:
   buildResources: build
+
+# Core files to include
 files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-asarUnpack:
-  - resources/**
-win:
-  executableName: merkle
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  - from: 'out/main'
+    to: '.'
+    filter: ["**/*"]
+
+  - from: 'out/renderer'
+    to: 'renderer'
+    filter: ["**/*"]
+
+  - from: 'backend/build'
+    to: 'backend'
+    filter: ['**/*']
+  - 'package.json'
+
+# Additional resources
+extraResources:
+  - from: 'out/renderer'
+    to: 'renderer'
+    filter: ['**/*']
+  - from: 'backend/build'
+    to: 'backend'
+    filter: ['**/*']
+# Force unpacking:
+    unpack: "*.html"
+    unpack: "assets/*"
+  - from: 'resources'
+    to: 'resources'
+    filter: ['**/*']
+  - from: 'backend/db.sqlite' 
+    to: 'backend'
+  - from: "backend/drizzle"
+    to: "backend/drizzle"
+
+# Packaging options
+asar: true
 mac:
+  target: dmg
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
-linux:
-  target:
-    - AppImage
-    - snap
-    - deb
-  maintainer: electronjs.org
-  category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
-npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
+  artifactName: '${name}-${version}.${ext}'

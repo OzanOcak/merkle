@@ -10,8 +10,8 @@ const port = 3001
 // Configure allowed origins
 const ALLOWED_ORIGINS = [
   'http://localhost:5173', // Electron renderer
-  'app://*', // Electron production (if using app protocol)
-  'file://*' // For file:// URLs in production
+  'app://.' // Electron production (if using app protocol)
+  //'file://*' // For file:// URLs in production
 ]
 
 app.use(
