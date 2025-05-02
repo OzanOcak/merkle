@@ -116,32 +116,46 @@
   "build": {
     "appId": "com.oocak.markle",
     "productName": "Markle",
+    "asar": true,
+    "compression": "normal",
     "files": [
       "out/main/**/*",
-      "out/preload/**/*"
+      "out/preload/**/*",
+      "!**/*.map",
+      "!**/*.ts",
+      "!**/test/**"
     ],
     "extraResources": [
       {
         "from": "out/renderer",
         "to": "renderer",
         "filter": [
-          "**/*"
+          "**/*",
+          "!**/*.map"
         ]
       },
       {
         "from": "api",
-        "to": "api"
+        "to": "api",
+        "filter": [
+          "**/*",
+          "!**/*.map"
+        ]
       },
       {
         "from": "backend/dist",
-        "to": "backend"
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/*.map"
+        ]
       }
     ],
     "mac": {
       "target": "dmg",
       "category": "public.app-category.productivity",
       "identity": null,
-      "asar": false
+      "asar": true
     },
     "win": {
       "target": "nsis"
