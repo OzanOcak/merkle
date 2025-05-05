@@ -6,6 +6,7 @@
     "start": "node build/server.js",
     "dev": "nodemon --watch src -e ts --exec ts-node src/server.ts",
     "build": "rm -rf build && tsc && cp -r src/database drizzle db.sqlite build/",
+    "package": "npm run build && mkdir -p ../out/backend && cp -r build/* ../out/backend/",
     "clean": "rm -rf build",
     "db:generate": "drizzle-kit generate --schema=./src/database/schema.ts --out=./drizzle --dialect=sqlite",
     "db:push": "drizzle-kit push --schema=./src/database/schema.ts --dialect=sqlite --url=file:./db.sqlite",
@@ -17,9 +18,7 @@
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.41.0",
-    "express": "^5.1.0",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

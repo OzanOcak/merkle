@@ -27,7 +27,7 @@ app.use(body_parser_1.default.json());
 app.use('/api', api_1.default);
 (0, database_1.connectDatabase)().then(() => {
     app.listen(port, () => {
-        console.log(`Markle@2025 API running at http://localhost:${port}`);
+        console.log(`Markle@2025 API running`);
     });
 });
 exports.default = app;

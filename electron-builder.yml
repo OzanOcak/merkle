@@ -13,9 +13,6 @@ files:
     to: 'renderer'
     filter: ["**/*"]
 
-  - from: 'backend/build'
-    to: 'backend'
-    filter: ['**/*']
   - 'package.json'
 
 # Additional resources
@@ -23,19 +20,17 @@ extraResources:
   - from: 'out/renderer'
     to: 'renderer'
     filter: ['**/*']
-  - from: 'backend/build'
-    to: 'backend'
-    filter: ['**/*']
-# Force unpacking:
+  # Force unpacking
     unpack: "*.html"
     unpack: "assets/*"
   - from: 'resources'
     to: 'resources'
     filter: ['**/*']
-  - from: 'backend/db.sqlite' 
+  # Backend goes to app/backend (CRITICAL PATH FIX)
+  - from: 'out/backend'
     to: 'backend'
-  - from: "backend/drizzle"
-    to: "backend/drizzle"
+    filter: ['**/*']
+    unpack: "**/*"  # Force unpack everything
 
 # Packaging options
 asar: true

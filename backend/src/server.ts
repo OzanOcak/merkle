@@ -30,7 +30,7 @@ app.use('/api', apiRouter)
 
 connectDatabase().then(() => {
   app.listen(port, () => {
-    console.log(`Markle@2025 API running at http://localhost:${port}`)
+    console.log(`Markle@2025 API running`)
   })
 })
 
