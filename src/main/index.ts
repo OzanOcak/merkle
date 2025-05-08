@@ -41,10 +41,12 @@ const startBackend = async (): Promise<boolean> => {
   cleanupBackend()
 
   try {
-    const backendPath =
-      process.env.NODE_ENV === 'development'
-        ? path.join(__dirname, '../../backend/build')
-        : path.join(process.resourcesPath, 'backend')
+    const backendPath = path.join(__dirname, '../backend')
+
+    // Set NODE_PATH to include backend node_modules
+    process.env.NODE_PATH = path.join(backendPath, 'node_modules')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('module').Module._initPaths()
 
     const backendMain = path.join(backendPath, 'server.js')
     if (!fs.existsSync(backendMain)) {
@@ -94,22 +96,42 @@ const createWindow = async (): Promise<void> => {
   }
 
   try {
+    // Determine correct icon path
+    const iconPath =
+      process.env.NODE_ENV === 'development'
+        ? path.join(
+            __dirname,
+            '../../resources',
+            process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+          )
+        : path.join(
+            process.resourcesPath,
+            'resources',
+            process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+          )
+
     mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
       show: false,
-      icon: path.join(__dirname, 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
+      icon: iconPath,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
-        devTools: process.env.NODE_ENV === 'development'
+        devTools: process.env.NODE_ENV === 'development',
+        webSecurity: false // Helps with file:// loads
       }
     })
 
+    // Set up renderer loading
+    await mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+
+    // Dev tools
     if (process.env.NODE_ENV === 'development') {
       mainWindow.webContents.openDevTools({ mode: 'detach' })
     }
 
+    // Window events
     mainWindow.on('ready-to-show', () => {
       if (process.platform === 'darwin') {
         app.dock?.show()
@@ -123,12 +145,9 @@ const createWindow = async (): Promise<void> => {
         app.dock?.hide()
       }
     })
-
-    await (process.env.NODE_ENV === 'development'
-      ? mainWindow.loadURL('http://localhost:5173')
-      : mainWindow.loadFile(path.join(process.resourcesPath, 'renderer/index.html')))
-  } catch (err) {
-    handleError('Creating window', err)
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err))
+    handleError('Creating window', error)
     if (mainWindow) {
       await mainWindow.loadURL(`data:text/html,<h1>Application Error</h1>`)
       mainWindow.show()

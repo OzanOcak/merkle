@@ -1,39 +1,21 @@
 appId: com.markle.app
 productName: 'Markle'
-directories:
-  buildResources: build
 
-# Core files to include
 files:
   - from: 'out/main'
     to: '.'
-    filter: ["**/*"]
 
-  - from: 'out/renderer'
-    to: 'renderer'
-    filter: ["**/*"]
-
-  - 'package.json'
-
-# Additional resources
 extraResources:
+  - from: "out/backend"
+    to: "backend"
+    filter: ["**/*"]
+    unpack: "**/*.js"
+    unpack: "**/*.json" 
+    unpack: "**/node_modules/**"
   - from: 'out/renderer'
-    to: 'renderer'
-    filter: ['**/*']
-  # Force unpacking
-    unpack: "*.html"
-    unpack: "assets/*"
-  - from: 'resources'
-    to: 'resources'
-    filter: ['**/*']
-  # Backend goes to app/backend (CRITICAL PATH FIX)
-  - from: 'out/backend'
-    to: 'backend'
-    filter: ['**/*']
-    unpack: "**/*"  # Force unpack everything
+    to: '.'
 
-# Packaging options
-asar: true
+asar: false # Critical - no ASAR issues
 mac:
   target: dmg
   entitlementsInherit: build/entitlements.mac.plist

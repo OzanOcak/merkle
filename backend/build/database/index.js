@@ -41,24 +41,29 @@ exports.connectDatabase = connectDatabase;
 const better_sqlite3_1 = require("drizzle-orm/better-sqlite3");
 const better_sqlite3_2 = __importDefault(require("better-sqlite3"));
 const schema = __importStar(require("./schema"));
-const path_1 = require("path");
-// Fixed path with proper cleanup handling
-const dbPath = (0, path_1.resolve)(__dirname, '../../db.sqlite');
-const sqlite = new better_sqlite3_2.default(dbPath, { verbose: console.log });
+const migrator_1 = require("drizzle-orm/better-sqlite3/migrator");
+const path_1 = __importDefault(require("path"));
+const dbPath = process.env.NODE_ENV === 'production'
+    ? path_1.default.join(__dirname, '../../db.sqlite') // Production path
+    : path_1.default.join(__dirname, '../../../db.sqlite'); // Development path
+const sqlite = new better_sqlite3_2.default(dbPath);
 exports.sqlite = sqlite;
-// Disable WAL mode if you don't need concurrent writes
-sqlite.pragma('journal_mode = DELETE');
 const db = (0, better_sqlite3_1.drizzle)(sqlite, { schema });
 exports.db = db;
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function connectDatabase() {
     try {
+        console.log(`Using database at: ${dbPath}`);
+        // Apply migrations
+        await (0, migrator_1.migrate)(db, {
+            migrationsFolder: path_1.default.join(__dirname, '../drizzle')
+        });
+        // Test connection
         await db.select().from(schema.files).limit(1).execute();
-        console.log(`Connected to ${dbPath}`);
         return db;
     }
     catch (err) {
-        console.error('Connection error:', err);
+        console.error('Database initialization failed:', err);
         throw err;
     }
 }

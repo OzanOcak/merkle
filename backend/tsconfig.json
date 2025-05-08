@@ -1,13 +1,17 @@
+// backend/tsconfig.json
 {
-    "compilerOptions": {
-      "esModuleInterop": true,
-      "module": "commonjs",
-      "target": "ES2022",
-      "outDir": "./build",
-      "rootDir": "./src",
-      "strict": true,
-      "skipLibCheck": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules"]
-  }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./build",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "types": ["node", "express"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build"]
+}
