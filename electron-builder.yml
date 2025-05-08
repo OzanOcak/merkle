@@ -1,27 +1,25 @@
 appId: com.markle.app
 productName: 'Markle'
+directories:
+  output: dist
+  buildResources: build
 
 files:
   - from: 'out/main'
     to: '.'
+    filter: ['**/*']
 
 extraResources:
-  - from: "out/backend"
-    to: "backend"
-    filter: ["**/*"]
-    unpack: "**/*.js"
-    unpack: "**/*.json" 
-    unpack: "**/node_modules/**"
+  - from: 'out/backend'
+    to: 'backend'
+    filter: ['**/*']
   - from: 'out/renderer'
-    to: '.'
+    to: 'renderer'
+    filter: ['**/*']
 
-asar: false # Critical - no ASAR issues
 mac:
-  target: dmg
-  entitlementsInherit: build/entitlements.mac.plist
-  extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-  notarize: false
-dmg:
+  target:
+    target: default
+    arch: x64 # Force x64 build to prevent arm64 issues
   artifactName: '${name}-${version}.${ext}'
+  asar: false # Disable ASAR completely
