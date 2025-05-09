@@ -96,7 +96,7 @@ const debugAppPaths = (): void => {
     }
   })
 }
-
+/*
 const findRendererPath = (): string => {
   console.log('=== NUCLEAR PATH DETECTION ===')
 
@@ -151,6 +151,7 @@ const findRendererPath = (): string => {
 
   throw new Error('COULD NOT LOCATE RENDERER - SEE CONSOLE FOR SCAN RESULTS')
 }
+*/
 
 // Backend process management
 const cleanupBackend = (): void => {
@@ -221,104 +222,101 @@ const startBackend = async (): Promise<boolean> => {
 const createWindow = async (): Promise<void> => {
   // Handle existing window
   if (mainWindow && !mainWindow.isDestroyed()) {
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore()
-    }
+    if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
     return
   }
 
+  // Create new window
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      devTools: true,
+      webSecurity: false
+    }
+  })
+
+  // Ensure DevTools are open
+  mainWindow.webContents.openDevTools({ mode: 'detach' })
+
+  // Window event handlers
+  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
+
   try {
-    // Determine correct icon path
-    const iconPath =
-      process.env.NODE_ENV === 'development'
-        ? path.join(
-            __dirname,
-            '../../resources',
-            process.platform === 'win32' ? 'icon.ico' : 'icon.png'
-          )
-        : path.join(
-            process.resourcesPath,
-            'resources',
-            process.platform === 'win32' ? 'icon.ico' : 'icon.png'
-          )
-
-    // Create new window
-    mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      show: false,
-      icon: iconPath,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-        devTools: true, // Keep enabled for now
-        webSecurity: false
-      }
-    })
-
-    // Window event handlers
-    mainWindow.on('ready-to-show', () => {
-      if (process.platform === 'darwin') {
-        app.dock?.show()
-      }
-      mainWindow?.show()
-    })
-
-    mainWindow.on('closed', () => {
-      mainWindow = null
-      if (process.platform === 'darwin') {
-        app.dock?.hide()
-      }
-    })
-
-    // Load the renderer - SIMPLIFIED BASED ON NUCLEAR SCAN RESULTS
     if (process.env.NODE_ENV === 'development') {
       await mainWindow.loadURL('http://localhost:5173')
     } else {
-      // Use the exact path we know works from the scan
-      // Use the nuclear path detector
-      const rendererPath = findRendererPath()
-      console.log('🔨 USING RENDERER PATH:', rendererPath)
-      await mainWindow.loadFile(rendererPath)
-
-      if (!fs.existsSync(rendererPath)) {
-        throw new Error(`Renderer not found at: ${rendererPath}`)
-      }
-
-      await mainWindow.loadFile(rendererPath)
+      // THIS IS WHERE WE CALL loadProductionRenderer
+      await loadProductionRenderer(mainWindow)
     }
 
-    // Open dev tools in both modes for now (remove in production)
-    mainWindow.webContents.openDevTools() // Keep for debugging
     mainWindow.show()
   } catch (err) {
-    console.error('Window creation failed:', err)
+    console.error('💥 CRITICAL ERROR:', err)
 
-    // Enhanced error display with path info
+    // Show error in window
     const errorHtml = `
-      <h1>Application Error</h1>
+      <h1>LOAD ERROR</h1>
       <pre>${err instanceof Error ? err.stack : String(err)}</pre>
-      <h3>Debug Info:</h3>
-      <p>NODE_ENV: ${process.env.NODE_ENV || 'undefined'}</p>
-      <p>Current directory: ${process.cwd()}</p>
-      <p>Renderer path attempted: ${path.join(process.cwd(), 'out/renderer/index.html')}</p>
-      <p>Directory contents: ${
-        fs.existsSync(path.join(process.cwd(), 'out/renderer'))
-          ? fs.readdirSync(path.join(process.cwd(), 'out/renderer')).join(', ')
-          : 'out/renderer does not exist'
-      }</p>
+      <h3>Current Resources Path:</h3>
+      <pre>${process.resourcesPath}</pre>
+      <h3>Directory Contents:</h3>
+      <pre>${fs.existsSync(process.resourcesPath) ? fs.readdirSync(process.resourcesPath).join('\n') : 'PATH NOT FOUND'}</pre>
     `
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      await mainWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`)
-      mainWindow.show()
-    } else {
-      const errorWindow = new BrowserWindow({ width: 800, height: 600 })
-      await errorWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`)
-      errorWindow.webContents.openDevTools()
-    }
+    await mainWindow.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`)
   }
+}
+
+// Production renderer loader (NOW PROPERLY CALLED)
+const loadProductionRenderer = async (window: BrowserWindow): Promise<void> => {
+  const rendererPath = path.join(process.resourcesPath, 'app-renderer/index.html')
+  console.log(`🔄 Attempting to load from: ${rendererPath}`)
+
+  if (fs.existsSync(rendererPath)) {
+    console.log('✅ Found renderer at expected path')
+    await window.loadFile(rendererPath)
+    return
+  }
+
+  // Fallback scan
+  console.log('💀 Starting emergency path scan...')
+  let scanResults = ''
+  try {
+    scanResults = execSync(`find "${process.resourcesPath}" -name "index.html"`).toString()
+    console.log('🔥 Scan results:', scanResults)
+
+    const foundFiles = scanResults.split('\n').filter((f) => f.includes('index.html'))
+    if (foundFiles.length > 0) {
+      console.log(`⚠️ Loading from: ${foundFiles[0]}`)
+      await window.loadFile(foundFiles[0])
+      return
+    }
+  } catch (scanErr) {
+    console.error('Scan failed:', scanErr)
+    scanResults = `Scan error: ${(scanErr as Error).message}`
+  }
+
+  // Final error display
+  const errorHtml = `
+    <h1>RENDERER NOT FOUND</h1>
+    <h3>Tried path:</h3>
+    <pre>${rendererPath}</pre>
+    <h3>Scan results:</h3>
+    <pre>${scanResults || 'No HTML files found'}</pre>
+    <h3>Resources directory contents:</h3>
+    <pre>${fs.existsSync(process.resourcesPath) ? fs.readdirSync(process.resourcesPath).join('\n') : 'NOT FOUND'}</pre>
+  `
+
+  await window.loadURL(`data:text/html,${encodeURIComponent(errorHtml)}`)
+  throw new Error('Failed to locate renderer')
 }
 
 // App lifecycle

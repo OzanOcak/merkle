@@ -117,14 +117,14 @@
     "extraResources": [
       {
         "from": "out/renderer",
-        "to": ".",
+        "to": "app-renderer",
         "filter": [
           "**/*"
         ]
       },
       {
         "from": "out/backend",
-        "to": "backend",
+        "to": "app-backend",
         "filter": [
           "**/*"
         ]

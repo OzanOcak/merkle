@@ -14,7 +14,7 @@ extraResources:
     to: 'backend'
     filter: ['**/*']
   - from: 'out/renderer'
-    to: 'renderer'
+    to: 'app-renderer'
     filter: ['**/*']
 
 mac:
