@@ -109,30 +109,24 @@
   "build": {
     "appId": "com.oocak.markle",
     "productName": "Markle",
-    "asar": true,
-    "compression": "normal",
+    "asar": false,
     "files": [
       "out/main/**/*",
-      "out/preload/**/*",
-      "!**/*.map",
-      "!**/*.ts",
-      "!**/test/**"
+      "out/preload/**/*"
     ],
     "extraResources": [
       {
         "from": "out/renderer",
-        "to": "renderer",
+        "to": ".",
         "filter": [
-          "**/*",
-          "!**/*.map"
+          "**/*"
         ]
       },
       {
         "from": "out/backend",
         "to": "backend",
         "filter": [
-          "**/*",
-          "!**/*.map"
+          "**/*"
         ]
       }
     ],
@@ -140,16 +134,19 @@
       "target": "dmg",
       "icon": "build/icon.icns",
       "category": "public.app-category.productivity",
-      "identity": null,
-      "asar": true
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build/icon.png"
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "asar": false,
+      "extraResources": [
+        {
+          "from": "build/icon.icns",
+          "to": "resources"
+        }
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": " ",
+        "NSCameraUsageDescription": " "
+      }
     }
   }
 }
