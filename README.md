@@ -2,9 +2,15 @@
 
 An Electron application with React and TypeScript
 
-## Recommended IDE Setup
+![App_img](git-media/screen1.gif)
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+### Explorer
+
+![Explorer](git-media/explorer2.gif)
+
+### Main App
+
+![Main_App](git-media/markle.gif)
 
 ## Project Setup
 
@@ -17,18 +23,18 @@ $ npm install
 ### Development
 
 ```bash
-$ npm run dev
+$ npm run clean
 ```
 
 ### Build
 
 ```bash
-# For windows
-$ npm run build:win
+$ npm run build
+
+# For development
+$ npm run build
 
 # For macOS
 $ npm run build:mac
 
-# For Linux
-$ npm run build:linux
 ```

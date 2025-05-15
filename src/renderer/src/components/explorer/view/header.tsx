@@ -20,7 +20,7 @@ export function ExplorerHeader({
   onNewFolder,
   onCollapseAll,
   // onImport,
-  title = 'Markly'
+  title = 'Markle'
 }: ExplorerHeaderProps) {
   const buttons = [
     {
