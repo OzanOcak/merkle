@@ -2,7 +2,7 @@
 
 An Electron application with React and TypeScript
 
-![App_img](git-media/screen1.gif)
+![App_img](git-media/screen1.png)
 
 ### Explorer
 
@@ -14,16 +14,11 @@ An Electron application with React and TypeScript
 
 ## Project Setup
 
-### Install
+### Install and swith the branch
 
 ```bash
 $ npm install
-```
-
-### Development
-
-```bash
-$ npm run clean
+$ git checkout new-main
 ```
 
 ### Build
@@ -32,9 +27,18 @@ $ npm run clean
 $ npm run build
 
 # For development
-$ npm run build
+$ npm run dev
 
 # For macOS
 $ npm run build:mac
 
+```
+
+### For migrating and pising new database table
+
+```bash
+$ cd backend
+$ npm run db:reset
+$ npm run db:generate
+$ npm run db:push
 ```
