@@ -3,18 +3,18 @@
 ### Architecture Overview
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffd8d8', 'edgeLabelBackground':'#fff'}}}%%
-flowchart
-    A[User] -->|HTTPS| B[Vercel Frontend]
-    B -->|API Calls| C[api.oocak.com]
-    C -->|Cloudflare Tunnel| D[Raspberry Pi]
+graph TD
+    A[User] --> B[Vercel Frontend]
+    B --> C[api.oocak.com]
+    C --> D[Raspberry Pi]
     D --> E[NGINX Reverse Proxy]
     E --> F[Express.js Server]
     F --> G[PostgreSQL Database]
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style C fill:#8df,stroke:#333
-    style D fill:#f96,stroke:#333
+
+    %% Adding labels to the arrows
+    A -->|HTTPS| B
+    B -->|API Calls| C
+    C -->|Cloudflare Tunnel| D
 ```
 
 ### Cloudflare Tunnel
