@@ -1,4 +1,3 @@
-// src/services/file.service.ts
 import { FileModel } from '../models/file.model'
 import { NewFile, File } from '../database/schema'
 

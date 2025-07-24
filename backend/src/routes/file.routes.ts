@@ -1,4 +1,3 @@
-// src/routes/file.routes.ts
 import { Router } from 'express'
 import { createFileController } from '../controllers/file.controller'
 import { FileService } from '../services/file.service'

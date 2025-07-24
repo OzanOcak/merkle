@@ -1,4 +1,3 @@
-// src/global.d.ts
 import { ElectronAPI } from '@electron-toolkit/preload'
 import { CustomAPI } from '../electron/preload'
 

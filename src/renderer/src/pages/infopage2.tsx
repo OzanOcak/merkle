@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 const InfoPage2: React.FC = () => {
   const navigate = useNavigate()
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleGoHome = () => {
     navigate('/') // Redirect to the home page
   }
@@ -18,8 +19,8 @@ const InfoPage2: React.FC = () => {
         the instructions to activate your account.
       </p>
       <p className="mt-2 text-gray-600">
-        If you don't see the email in your inbox, please check your spam folder or try resending the
-        verification email.
+        If you don&apos;t see the email in your inbox, please check your spam folder or try
+        resending the verification email.
       </p>
       <Button onClick={handleGoHome} className="mt-6">
         Go to Home

@@ -1,4 +1,3 @@
-// src/renderer/src/api.ts
 import axios from 'axios'
 
 // Single endpoint for both dev and prod

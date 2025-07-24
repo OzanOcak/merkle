@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const useBackendCheck = () => {
   const [isReady, setIsReady] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -8,7 +9,7 @@ export const useBackendCheck = () => {
     let retryCount = 0
     const maxRetries = 5
 
-    const checkConnection = async () => {
+    const checkConnection = async (): Promise<void> => {
       try {
         // Try any existing API endpoint
         const response = await fetch('http://localhost:3001/api/file', {

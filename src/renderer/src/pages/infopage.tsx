@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 const InfoPage: React.FC = () => {
   const navigate = useNavigate()
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleGoHome = () => {
     navigate('/') // Redirect to the home page
   }

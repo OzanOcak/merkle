@@ -1,4 +1,3 @@
-// src/hooks/useUpdateFileContent.ts
 import axios from 'axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
@@ -21,6 +20,7 @@ const updateFileContent = async ({ name, content }: UpdateFileParams): Promise<F
   return response.data
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const useUpdateFileContent = () => {
   const queryClient = useQueryClient()
 

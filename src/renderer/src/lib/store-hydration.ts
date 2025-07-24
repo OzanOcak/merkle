@@ -1,6 +1,7 @@
 import { useStore } from '@/store'
 import { useEffect, useState } from 'react'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default function StoreHydration({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false)
   const _hydrated = useStore((state) => state._hydrated)

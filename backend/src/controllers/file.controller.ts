@@ -1,4 +1,3 @@
-// src/controllers/file.controller.ts
 import { Request, Response } from 'express'
 import { FileService } from '../services/file.service'
 import { NewFile } from '../database/schema'

@@ -1,4 +1,3 @@
-// hooks/useRenameFile.ts
 import axios from 'axios'
 import { useMutation } from '@tanstack/react-query'
 
@@ -34,6 +33,7 @@ const renameFile = async ({
   return response.data
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const useRenameFile = () => {
   return useMutation({
     mutationFn: renameFile,

@@ -1,4 +1,3 @@
-// src/hooks/useCreateFile.ts
 import axios from 'axios'
 import { useMutation } from '@tanstack/react-query'
 
@@ -16,6 +15,7 @@ const createFile = async (file: { name: string; content: string }): Promise<File
   return response.data
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const useCreateFile = () => {
   return useMutation<File, Error, { name: string; content: string }>({
     mutationFn: createFile

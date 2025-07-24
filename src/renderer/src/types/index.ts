@@ -1,5 +1,3 @@
-// types/index.ts
-// types.d.ts
 import 'mermaid'
 
 declare global {

@@ -1,4 +1,3 @@
-// src/models/file.model.ts
 import { db } from '../database'
 import { files, type File, type NewFile } from '../database/schema'
 import { eq } from 'drizzle-orm'
